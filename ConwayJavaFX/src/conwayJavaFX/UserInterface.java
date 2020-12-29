@@ -15,7 +15,7 @@ import javafx.scene.text.Font;
 import javafx.util.Duration;
 import javafx.scene.shape.Rectangle;
 
-/*******
+/***
  * <p> Title: UserInterface Class. </p>
  * 
  * <p> Description: A JavaFX demonstration application: This controller class describes the user
@@ -30,11 +30,11 @@ import javafx.scene.shape.Rectangle;
  */
 public class UserInterface {
 	
-	/**********************************************************************************************
+	/********************************
 
 	Class Attributes
 	
-	**********************************************************************************************/
+	********************************/
 
 	// Attributes used to establish the board and control panel within the window provided to us
 	private double controlPanelHeight = ConwayMain.WINDOW_HEIGHT - 110;
@@ -44,7 +44,7 @@ public class UserInterface {
 	private int boardSizeWidth = (int)windowSizeWidth/cellSize;
 	private int boardSizeHeight = (int)(windowSizeHeight)/cellSize;
 	private int marginWidth = 20;
-
+	int [][] curr;
 	// The User Interface widgets used to control the user interface and start and stop the simulation
 	private Label label_FileName = new Label("Enter the name of the game's file here:");
 	private TextField text_FileName = new TextField();
@@ -77,22 +77,22 @@ public class UserInterface {
 	// These attributes define the Board used by the simulation and the graphical representation
 	// There are two Boards. The previous Board and the new Board.  Once the new Board has been
 	// displayed, it becomes the previous Board for the generation of the next new Board.
-	//private Board oddGameBoard = new Board();		// The Board for odd frames of the animation
+	private Board oddGameBoard = new Board(boardSizeWidth,boardSizeHeight);		// The Board for odd frames of the animation
 	private Pane oddCanvas = new Pane();			// Pane that holds its graphical representation
 	
-	//private Board evenGameBoard =  new Board();	// The Board for even frames of the animation
+	private Board evenGameBoard =  new Board(boardSizeWidth,boardSizeHeight);	// The Board for even frames of the animation
 	private Pane evenCanvas = new Pane();			// Pane that holds its graphical representation
 
 	private boolean toggle = true;					// A two-state attribute that specifies which
 													// is the previous Board and which is the new
-	
-	/**********************************************************************************************
+//	private int count = 0;
+	/********************************
 
 	Constructors
 	
-	**********************************************************************************************/
+	********************************/
 
-	/**********
+	/****
 	 * This constructor established the user interface with all of the graphical widgets that are
 	 * use to make the user interface work.
 	 * 
@@ -169,13 +169,13 @@ public class UserInterface {
 	}
 
 	
-	/**********************************************************************************************
+	/********************************
 
 	Helper methods - Used to set up the JavaFX widgets and simplify the code above
 	
-	**********************************************************************************************/
+	********************************/
 
-	/**********
+	/****
 	 * Private local method to initialize the standard fields for a label
 	 */
 	private void setupLabelUI(Label l, String ff, double f, double w, Pos p, double x, double y){
@@ -186,7 +186,7 @@ public class UserInterface {
 		l.setLayoutY(y);
 	}
 
-	/**********
+	/****
 	 * Private local method to initialize the standard fields for a text field
 	 */
 	private void setupTextUI(TextField t, String ff, double f, double w, Pos p, double x, double y, boolean e){
@@ -199,7 +199,7 @@ public class UserInterface {
 		t.setEditable(e);
 	}
 
-	/**********
+	/****
 	 * Private local method to initialize the standard fields for a button
 	 */
 	private void setupButtonUI(Button b, String ff, double f, double w, Pos p, double x, double y){
@@ -210,13 +210,13 @@ public class UserInterface {
 		b.setLayoutY(y);		
 	}
 	
-	/**********************************************************************************************
+	/********************************
 
 	Action methods - Used cause things to happen with the set up or during the simulation
 	
-	**********************************************************************************************/
+	********************************/
 
-	/**********
+	/****
 	 * This routine checks, after each character is typed, to see if the game of life file is there
 	 * and if so, sets up a scanner to it and enables a button to read it and run the simulation.  
 	 * If a file is not found, a warning message is displayed and the button is disabled.
@@ -260,14 +260,32 @@ public class UserInterface {
 			}
 	}
 
-	/**********
+	/****
 	 * This method is called when the Load button is pressed. It tries to load the data onto the
 	 * board for the simulation.
 	 */
 	private void loadImageData() {
 		try {
 			// Your code goes here......
-			
+			str_FileName = text_FileName.getText();
+			Scanner sc = new Scanner(new File(str_FileName));
+			int c = 0;
+			while(sc.hasNextLine()) {
+				String [] s = sc.nextLine().split(" ");
+				c++;				
+			}
+			sc = new Scanner(new File(str_FileName));
+			int [][] l = new int[c][2];
+			int index = 0;
+			while(sc.hasNextLine()) {
+				String [] s = sc.nextLine().split(" ");
+				l[index][0] = Integer.parseInt(s[0]);
+				l[index][1] = Integer.parseInt(s[1]);
+				index++;
+			}
+			oddGameBoard.createBoard(l);
+			draw();
+//			window.getChildren().add(evenCanvas);
 		}
 		catch (Exception e)  {
 			// Since we have already done this check, this exception should never happen
@@ -277,7 +295,7 @@ public class UserInterface {
 		button_Start.setDisable(false);				// Enable the Start button
 	};												// and wait for the User to press it.
 
-	/**********
+	/****
 	 * This method removes the start button, sets up the stop button, and starts the simulation
 	 */
 	private void startConway() {
@@ -291,7 +309,7 @@ public class UserInterface {
 		timeline.play();								// Start the animation
 	};
 	
-	/**********
+	/****
 	 * This method display the current state of the odd board and terminates the application
 	 */
 	private void stopConway() {
@@ -300,22 +318,54 @@ public class UserInterface {
 		System.exit(0);
 	}
 
-	/**********
+	/****
 	 * This method is run each time the timeline triggers it
 	 */
 	public void runSimulation(){
 		// Use the toggle to flip back and forth between the current generation and next generation boards.
 		
 		// Your code goes here...
+		if(toggle) {
+			oddGameBoard.nextGeneration(evenGameBoard);
+//			draw(oddCanvas);
+//			window.getChildren().remove(evenCanvas);
+//			window.getChildren().add(oddCanvas);
+			toggle=false;
+		}else {
+			evenGameBoard.nextGeneration(oddGameBoard);
+//			draw(oddCanvas);
+//			window.getChildren().remove(oddCanvas);
+//			window.getChildren().add(evenCanvas);
+			toggle=true;
+		}
+		draw();
+	}
+	
+	public void draw() {
+		Board board;
+		if(toggle) {
+			board = oddGameBoard;
+		}else {
+			board = evenGameBoard;
+		}
+		for(int i=0;i<board.row;i++) {
+			for(int j=0;j<board.col;j++) {
+				if(board.b[i][j]==1) {
+					Rectangle rectangle = new Rectangle(5,5,Color.BLACK);
+					rectangle .relocate(6*i, 6*j);
+					window.getChildren().add(rectangle);
+				}
+			}
+		}
 	}
 
-	/**********
+	/****
 	 * This method reads in the contents of the data file and discards it as quickly as it reads it
 	 * in order to verify that the data meets the input data specifications and helps reduce the 
 	 * change that invalid input data can lead to some kind of hacking.
 	 * 
-	 * @return	true - 	when the input file *is* valid
-	 * 					when the input file data is *not* valid - The method also sets a string with
+	 * @return	true - 	when the input file is valid
+	 * 					when the input file data is not valid - The method also sets a string with
 	 * 						details about what is wrong with the input data so the user can fix it
 	 */
 	private boolean fileContentsAreValid() {
